@@ -9,7 +9,7 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.feature_selection import SelectPercentile, f_regression, f_classif
 from joblib import Parallel, delayed
 from neuroCombat import neuroCombat, neuroCombatFromTraining
-from univariate import corr, freedman_lane
+from mpm.univariate import corr, freedman_lane
 
 
 def is_categorical(column):
@@ -22,7 +22,6 @@ def is_categorical(column):
     Returns:
         bool: True if the column contains only 0s and 1s, False otherwise.
     """
-    
     unique_values = np.unique(column)
     return set(unique_values).issubset({0, 1})
 
@@ -43,7 +42,6 @@ def harmonize(Y, X, Z, samples, preserve_cols):
         - X_harmonized (pd.DataFrame): Harmonized neuroimaging data.
         - estimates (dict): Harmonization estimates from neuroCombat.
     """
-    
     pheno = pd.concat([Y,Z[preserve_cols],samples], axis=1)
 
     cat_columns = [col for col in pheno.columns if pheno[col].dropna().isin([0, 1]).all() and col != 'sample']
@@ -75,7 +73,6 @@ def apply_harmonization(Y, X, Z, samples, estimates, preserve_cols):
     Returns:
         pandas.DataFrame: Harmonized neuroimaging data.
     """
-    
     pheno = pd.concat([Y,Z[preserve_cols],samples], axis=1)
 
     harmonization = neuroCombatFromTraining(X.T, pheno['sample'], estimates)
@@ -105,7 +102,6 @@ def prep_predictors(fold, Y, X, Z, samples, preserve_cols, select_features, perc
         numpy.ndarray: Processed predictors after feature selection, harmonization, 
                       covariate regression, and standardization
     """
-    
     idxtrain = fold[0]
     idxtest = fold[1]
     
@@ -176,7 +172,6 @@ def fit(alpha, fold, predictors, Y, seed):
            - For classification: Matthews correlation coefficient.
            - For regression: Correlation between actual and predicted responses.
     """
-    
     idxtrain = fold[0]
     idxtest = fold[1]
     
@@ -199,7 +194,7 @@ def fit(alpha, fold, predictors, Y, seed):
         r = corr(Y.iloc[idxtest,:].values.ravel(), Y_pred)
         return r
     
-    
+
 def compute_score(outer_fold, inner_folds, Y, X, Z, samples, preserve_cols, seed, select_features, percentile, n_jobs):
     """
     Performs nested cross-validation to tune model hyperparameters and evaluate performance.
@@ -297,7 +292,6 @@ def run_ml(p, outer_folds, inner_folds, Y, X, Z, samples, preserve_cols, seed, s
     Returns:
         list: Performance scores from the outer folds.
     """
-    
     if p == 0:
         Yshuf = Y.copy()
     else:
@@ -309,7 +303,7 @@ def run_ml(p, outer_folds, inner_folds, Y, X, Z, samples, preserve_cols, seed, s
             P = np.eye(N)[idy]
             Yshuf = P @ Y.values
         else:
-            Z_centered = Z.values - np.mean(Z.values, axis=0)
+            Z_centered = np.column_stack([np.ones((N, 1)), Z.values - np.mean(Z.values, axis=0)])
             Hz = Z_centered @ np.linalg.pinv(Z_centered)
             Rz = np.eye(N) - Hz
             Yshuf = freedman_lane(Y.values, Z_centered, idy, Rz=Rz, Hz=Hz)
@@ -322,6 +316,5 @@ def run_ml(p, outer_folds, inner_folds, Y, X, Z, samples, preserve_cols, seed, s
         rs.append(r)
     
     return rs
-
 
 

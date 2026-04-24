@@ -35,7 +35,6 @@ def palm_competitive(X, ord='ascend', mod=False):
             - S (np.ndarray): Sorted values, just as in 'sort'.
             - srtR (np.ndarray): Competition ranks sorted as in S.
     """
-    
     X = np.asarray(X)
     if X.ndim != 2:
         raise ValueError('X must be a 2D array.')
@@ -138,7 +137,6 @@ def palm_pareto(G, Gdist, rev, Pthr, G1out):
             - kpar (float or None): Shape parameter of the GPD (None if not estimated).
             - upar (float or None): Location parameter of the GPD (None if not estimated).
     """
-    
     apar = None
     kpar = None
     upar = None
@@ -218,7 +216,6 @@ def palm_datapval(G, Gdist, rev):
     Returns:
         np.ndarray: Array of permutation p-values computed for each element in G.
     """
-
     if rev:
         P = np.mean(Gdist[:, np.newaxis] <= G[np.newaxis, :], axis=0)
     else:

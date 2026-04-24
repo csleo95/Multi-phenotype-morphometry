@@ -29,16 +29,26 @@ def cca(Y, X, R, S):
         tuple: A tuple containing:
         - A (np.ndarray): Coefficient matrix for Y.
         - B (np.ndarray): Coefficient matrix for X.
-        - cc (np.ndarray): Diagonal matrix of canonical correlations.
+        - cc (np.ndarray): Vector of canonical correlations.
         - U (np.ndarray): Canonical variates for Y.
         - V (np.ndarray): Canonical variates for X.
     """
+    rank_y = matrix_rank(Y)
+    rank_x = matrix_rank(X)
     
+    if rank_y < Y.shape[1]:
+        raise ValueError("CCA requires Y to have full column rank.")
+    
+    if rank_x < X.shape[1]:
+        raise ValueError("CCA requires X to have full column rank.")
+
     N = Y.shape[0] 
-     
+
     Qy, Ry, iY = qr(Y, mode='economic', pivoting=True) 
     Qx, Rx, iX = qr(X, mode='economic', pivoting=True) 
+    
     K = min(matrix_rank(Y), matrix_rank(X)) 
+    
     U, D, Vt = svd(Qy.T @ Qx, full_matrices=False) 
     L = U[:, :K] 
     M = Vt.T[:, :K] 
@@ -71,7 +81,6 @@ def cca_pvalues(ccs_perm):
     Returns:
         numpy.ndarray: p-values for each canonical correlation.
     """
-    
     cc1 = ccs_perm[0]
     nP = len(ccs_perm)
     
@@ -86,4 +95,3 @@ def cca_pvalues(ccs_perm):
     pvalues_fwer = np.maximum.accumulate(pvalues)
     
     return pvalues, pvalues_fwer
-
